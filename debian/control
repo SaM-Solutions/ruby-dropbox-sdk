@@ -1,0 +1,21 @@
+Source: ruby-dropbox-sdk
+Section: ruby
+Priority: optional
+Maintainer: Debian Ruby Extras Maintainers <pkg-ruby-extras-maintainers@lists.alioth.debian.org>
+Uploaders:  <>
+DM-Upload-Allowed: yes
+Build-Depends: debhelper (>= 7.0.50~), gem2deb (>= 0.3.0~)
+Standards-Version: 3.9.3
+#Vcs-Git: git://git.debian.org/pkg-ruby-extras/ruby-dropbox-sdk.git
+#Vcs-Browser: http://git.debian.org/?p=pkg-ruby-extras/ruby-dropbox-sdk.git;a=summary
+Homepage: http://www.dropbox.com/developers/
+XS-Ruby-Versions: ruby1.9.1
+
+Package: ruby-dropbox-sdk
+Architecture: all
+XB-Ruby-Versions: ${ruby:Versions}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby | ruby-interpreter
+# json (>= 0)
+Description: Dropbox REST API Client.
+ A library that provides a plain function-call interface to the
+ Dropbox API web endpoints.
