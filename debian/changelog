@@ -1,5 +1,5 @@
-ruby-dropbox-sdk (1.5.1-1) UNRELEASED; urgency=low
+ruby-dropbox-sdk (1.5.1-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)
+  * Packaged for Debian
 
- --  <lava@ci-server.sam-solutions.net>  Fri, 01 Feb 2013 12:03:02 +0300
+ -- Eugene Lavnikevich <e.lavnikevich@sam-solutions.net>  Fri, 01 Feb 2013 12:03:02 +0300
