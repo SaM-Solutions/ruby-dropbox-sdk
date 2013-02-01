@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'uri'
 require 'net/https'
 require 'cgi'
@@ -889,7 +888,7 @@ class DropboxClient
     # Returns:
     # * The HTTPResponse for the thumbnail request.
     def thumbnail_impl(from_path, size='large') # :nodoc:
-        from_path = format_path(from_path, true)
+        from_path = format_path(from_path, false)
 
         params = {
             "size" => size

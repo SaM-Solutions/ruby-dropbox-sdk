@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.5.1-2) unstable; urgency=low
+
+  * Extended functionality for polling (Alexey Tulia <a.tulia@sam-solutions.net>)
+
+ -- Eugene Lavnikevich <e.lavnikevich@sam-solutions.net>  Fri, 01 Feb 2013 12:28:41 +0300
+
 ruby-dropbox-sdk (1.5.1-1) unstable; urgency=low
 
   * Packaged for Debian
