@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.5.1-5) unstable; urgency=low
+
+  * Configured to use VCS instead of patches for local builds
+
+ -- Eugene Lavnikevich <e.lavnikevich@sam-solutions.net>  Mon, 04 Feb 2013 19:33:45 +0300
+
 ruby-dropbox-sdk (1.5.1-4) unstable; urgency=low
 
   * Added necessary information on binaries to the debian configuration
