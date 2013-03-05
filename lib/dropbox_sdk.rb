@@ -48,7 +48,7 @@ class DropboxSession
         rescue OpenSSL::SSL::SSLError => e
             raise DropboxError.new("SSL error connecting to Dropbox.  " +
                                    "There may be a problem with the set of certificates in \"#{Dropbox::TRUSTED_CERT_FILE}\".  " +
-                                   e)
+                                   e.message)
         end
     end
 
