@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.5.1-7) unstable; urgency=low
+
+  * Fixed issues #2, #3, #4: SDK crashes in some cases
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Wed, 13 Mar 2013 12:00:15 +0300
+
 ruby-dropbox-sdk (1.5.1-6) unstable; urgency=low
 
   * Fixed issue #1: SDK crashes if OpenSSL occurred
