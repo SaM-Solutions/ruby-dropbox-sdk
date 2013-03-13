@@ -10,9 +10,9 @@ require 'pp'
 
 # You must use your Dropbox App key and secret to use the API.
 # Find this at https://www.dropbox.com/developers
-APP_KEY = ''
-APP_SECRET = ''
-ACCESS_TYPE = :app_folder #The two valid values here are :app_folder and :dropbox
+APP_KEY = '8c9eb974ppp9vd7'
+APP_SECRET = 'rq09a2ql24bdwif'
+ACCESS_TYPE = :dropbox #The two valid values here are :app_folder and :dropbox
                           #The default is :app_folder, but your application might be
                           #set to have full :dropbox access.  Check your app at
                           #https://www.dropbox.com/developers/apps
@@ -129,10 +129,13 @@ class DropboxCLI
             puts "error: File #{dest} already exists."
         else
             src = clean_up(command[1])
-            out,metadata = @client.get_file_and_metadata('/' + src)
+            metadata = @client.metadata('/' + src)
             puts "Metadata:"
             pp metadata
-            open(dest, 'w'){|f| f.puts out }
+            media = @client.media('/' + src)
+           `wget #{media["url"]} -q -T 20 -O #{dest}`
+            #out,metadata = @client.get_file_and_metadata('/' + src)
+            #open(dest, 'w'){|f| f.puts out }
             puts "wrote file #{dest}."
         end
     end

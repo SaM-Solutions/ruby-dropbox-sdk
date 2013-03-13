@@ -441,8 +441,9 @@ class DropboxClient
                     resp = @client.parse_response(@client.partial_chunked_upload(last_chunk, @upload_id, @offset))
                     last_chunk = nil
                 rescue DropboxError => e
+                    raise e if e.http_response.nil? or e.http_response.code[0] == '5'
                     resp = JSON.parse(e.http_response.body)
-                    raise unless resp.has_key? 'offset'
+                    raise DropboxError.new('server response doesnt contain offset key') unless resp.has_key? 'offset'
                 end
 
                 if resp.has_key? 'offset' and resp['offset'] > @offset
