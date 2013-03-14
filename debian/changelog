@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.5.1-8) unstable; urgency=low
+
+  * Fixed issue with json parsing: SDK crashes if not valid JSON response passed in.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Thu, 14 Mar 2013 14:08:15 +0300
+
 ruby-dropbox-sdk (1.5.1-7) unstable; urgency=low
 
   * Fixed issues #2, #3, #4: SDK crashes in some cases
