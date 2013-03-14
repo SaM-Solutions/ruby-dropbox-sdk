@@ -446,7 +446,7 @@ class DropboxClient
                       resp = JSON.parse(e.http_response.body)
                       raise DropboxError.new('server response doesnt have offset key') unless resp.has_key? 'offset'
                     rescue JSON::ParserError
-                      raise DropboxError.new("Unable to parse JSON response: #{response.body}")
+                      raise DropboxError.new("Unable to parse JSON response: #{e.http_response.body}")
                     end                  
                   end
 
