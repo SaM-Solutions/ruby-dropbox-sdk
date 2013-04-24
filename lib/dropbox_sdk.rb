@@ -440,6 +440,10 @@ class DropboxClient
                 begin
                     resp = @client.parse_response(@client.partial_chunked_upload(last_chunk, @upload_id, @offset))
                     last_chunk = nil
+                rescue SocketError => e
+                  raise e
+                rescue SystemCallError => e
+                  raise e
                 rescue DropboxError => e
                     raise e if e.http_response.nil? or e.http_response.code[0] == '5'
                     begin
@@ -448,7 +452,7 @@ class DropboxClient
                     rescue JSON::ParserError
                       raise DropboxError.new("Unable to parse JSON response: #{e.http_response.body}")
                     end                  
-                  end
+                end
 
                 if resp.has_key? 'offset' and resp['offset'] > @offset
                     @offset += (resp['offset'] - @offset) if resp['offset']

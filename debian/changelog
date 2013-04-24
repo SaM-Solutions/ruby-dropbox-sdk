@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.5.1-10) unstable; urgency=low
+
+  * Added raising an exception if network error occured during file uploading.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Wed, 24 Apr 2013 17:32:00 +0300
+
 ruby-dropbox-sdk (1.5.1-9) unstable; urgency=low
 
   * Fixed type in rescue block.
