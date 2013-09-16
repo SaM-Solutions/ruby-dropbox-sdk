@@ -883,7 +883,7 @@ class DropboxClient
             params['cursor'] = cursor
         end
 
-        response = @session.do_post build_url("/delta", params)
+        response = @session.do_post(build_url("/delta"), nil, params)
         parse_response(response)
     end
 
