@@ -2,14 +2,13 @@
 Gem::Specification.new do |s|
     s.name = "dropbox-sdk"
 
-    s.version = "1.5.1"
+    s.version = "1.6.2"
     s.license = 'MIT'
 
     s.authors = ["Dropbox, Inc."]
     s.email = ["support-api@dropbox.com"]
 
     s.add_dependency "json"
-    s.add_dependency "oauth"
 
     s.homepage = "http://www.dropbox.com/developers/"
     s.summary = "Dropbox REST API Client."

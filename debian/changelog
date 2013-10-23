@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.6.2-1) unstable; urgency=low
+
+  * Switched to new Dropbox SDK 1.6.2.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Wed, 23 Oct 2013 13:08:15 +0300
+
 ruby-dropbox-sdk (1.5.1-11) unstable; urgency=low
 
   * Fixed issue #5: SDK crashes on some account types (issue with POST headers).

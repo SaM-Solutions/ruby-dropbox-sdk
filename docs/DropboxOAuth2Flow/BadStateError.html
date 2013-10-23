@@ -5,13 +5,13 @@
 <head>
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 
-  <title>Class: DropboxAuthError</title>
+  <title>Class: DropboxOAuth2Flow::BadStateError</title>
 
-  <link rel="stylesheet" href="./rdoc.css" type="text/css" media="screen" />
+  <link rel="stylesheet" href="../rdoc.css" type="text/css" media="screen" />
 
-  <script src="./js/jquery.js" type="text/javascript" charset="utf-8"></script>
-  <script src="./js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
-  <script src="./js/quicksearch.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../js/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../js/quicksearch.js" type="text/javascript" charset="utf-8"></script>
 
 </head>
 <body id="top" class="class">
@@ -20,9 +20,9 @@
     <div id="home-metadata">
       <div id="home-section" class="section">
         <h3 class="section-header">
-          <a href="./index.html">Home</a>
-          <a href="./index.html#classes">Classes</a>
-          <a href="./index.html#methods">Methods</a>
+          <a href="../index.html">Home</a>
+          <a href="../index.html#classes">Classes</a>
+          <a href="../index.html#methods">Methods</a>
         </h3>
       </div>
     </div>
@@ -33,7 +33,7 @@
         <div class="section-body">
           <ul>
           
-            <li><a href="./build/dropbox-ruby-sdk-1_6_2/lib/dropbox_sdk_rb.html?TB_iframe=true&amp;height=550&amp;width=785"
+            <li><a href="../build/dropbox-ruby-sdk-1_6_2/lib/dropbox_sdk_rb.html?TB_iframe=true&amp;height=550&amp;width=785"
               class="thickbox" title="build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb">build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb</a></li>
           
           </ul>
@@ -49,7 +49,7 @@
       <div id="parent-class-section" class="section">
         <h3 class="section-header">Parent</h3>
         
-        <p class="link"><a href="DropboxError.html">DropboxError</a></p>
+        <p class="link">Exception</p>
         
       </div>
       
@@ -69,7 +69,7 @@
 
       <div id="classindex-section" class="section project-section">
         <h3 class="section-header">Class/Module Index
-          <span class="search-toggle"><img src="./images/find.png"
+          <span class="search-toggle"><img src="../images/find.png"
             height="16" width="16" alt="[+]"
             title="show/hide quicksearch" /></span></h3>
         <form action="#" method="get" accept-charset="utf-8" class="initially-hidden">
@@ -82,29 +82,29 @@
 
         <ul class="link-list">
         
-          <li><a href="./DropboxOAuth2Flow.html">DropboxOAuth2Flow</a></li>
+          <li><a href="../DropboxOAuth2Flow.html">DropboxOAuth2Flow</a></li>
         
-          <li><a href="./DropboxOAuth2Flow/BadRequestError.html">DropboxOAuth2Flow::BadRequestError</a></li>
+          <li><a href="../DropboxOAuth2Flow/BadRequestError.html">DropboxOAuth2Flow::BadRequestError</a></li>
         
-          <li><a href="./DropboxOAuth2Flow/BadStateError.html">DropboxOAuth2Flow::BadStateError</a></li>
+          <li><a href="../DropboxOAuth2Flow/BadStateError.html">DropboxOAuth2Flow::BadStateError</a></li>
         
-          <li><a href="./DropboxOAuth2Flow/CsrfError.html">DropboxOAuth2Flow::CsrfError</a></li>
+          <li><a href="../DropboxOAuth2Flow/CsrfError.html">DropboxOAuth2Flow::CsrfError</a></li>
         
-          <li><a href="./DropboxOAuth2Flow/NotApprovedError.html">DropboxOAuth2Flow::NotApprovedError</a></li>
+          <li><a href="../DropboxOAuth2Flow/NotApprovedError.html">DropboxOAuth2Flow::NotApprovedError</a></li>
         
-          <li><a href="./DropboxOAuth2Flow/ProviderError.html">DropboxOAuth2Flow::ProviderError</a></li>
+          <li><a href="../DropboxOAuth2Flow/ProviderError.html">DropboxOAuth2Flow::ProviderError</a></li>
         
-          <li><a href="./DropboxClient.html">DropboxClient</a></li>
+          <li><a href="../DropboxClient.html">DropboxClient</a></li>
         
-          <li><a href="./DropboxClient/ChunkedUploader.html">DropboxClient::ChunkedUploader</a></li>
+          <li><a href="../DropboxClient/ChunkedUploader.html">DropboxClient::ChunkedUploader</a></li>
         
-          <li><a href="./DropboxAuthError.html">DropboxAuthError</a></li>
+          <li><a href="../DropboxAuthError.html">DropboxAuthError</a></li>
         
-          <li><a href="./DropboxError.html">DropboxError</a></li>
+          <li><a href="../DropboxError.html">DropboxError</a></li>
         
-          <li><a href="./DropboxNotModified.html">DropboxNotModified</a></li>
+          <li><a href="../DropboxNotModified.html">DropboxNotModified</a></li>
         
-          <li><a href="./DropboxOAuth2FlowNoRedirect.html">DropboxOAuth2FlowNoRedirect</a></li>
+          <li><a href="../DropboxOAuth2FlowNoRedirect.html">DropboxOAuth2FlowNoRedirect</a></li>
         
         </ul>
         <div id="no-class-search-results" style="display: none;">No matching classes.</div>
@@ -115,20 +115,15 @@
   </div>
 
   <div id="documentation">
-    <h1 class="class">DropboxAuthError</h1>
+    <h1 class="class">DropboxOAuth2Flow::BadStateError</h1>
 
     <div id="description" class="description">
       
-<p>This is the error raised on Authentication failures.  Usually this means
-one of three things</p>
-<ul><li>
-<p>Your user failed to go to the authorize url and approve your application</p>
-</li><li>
-<p>You set an invalid or expired token and secret on your Session</p>
-</li><li>
-<p>Your user deauthorized the application after you stored a valid token and
-secret</p>
-</li></ul>
+<p>Thrown if all the parameters are correct, but there’s no CSRF token in the
+session.  This probably means that the session expired.</p>
+
+<p>The recommended action is to redirect the user’s browser to try the
+approval process again.</p>
 
     </div><!-- description -->
 

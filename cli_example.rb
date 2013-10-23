@@ -10,12 +10,8 @@ require 'pp'
 
 # You must use your Dropbox App key and secret to use the API.
 # Find this at https://www.dropbox.com/developers
-APP_KEY = '8c9eb974ppp9vd7'
-APP_SECRET = 'rq09a2ql24bdwif'
-ACCESS_TYPE = :dropbox #The two valid values here are :app_folder and :dropbox
-                          #The default is :app_folder, but your application might be
-                          #set to have full :dropbox access.  Check your app at
-                          #https://www.dropbox.com/developers/apps
+APP_KEY = ''
+APP_SECRET = ''
 
 class DropboxCLI
     LOGIN_REQUIRED = %w{put get cp mv rm ls mkdir info logout search thumbnail}
@@ -27,37 +23,28 @@ class DropboxCLI
             exit
         end
 
-        @session = DropboxSession.new(APP_KEY, APP_SECRET)
         @client = nil
     end
 
     def login
-        ########
-        # Instead of going to a authorize URL, you can set a access token key and secret
-        # from a previous session
-        ########
-        # @session.set_access_token('key', 'secret')
-
-        if @session.authorized?
-           puts "already logged in!"
+        if not @client.nil?
+            puts "already logged in!"
         else
+            web_auth = DropboxOAuth2FlowNoRedirect.new(APP_KEY, APP_SECRET)
+            authorize_url = web_auth.start()
+            puts "1. Go to: #{authorize_url}"
+            puts "2. Click \"Allow\" (you might have to log in first)."
+            puts "3. Copy the authorization code."
 
-            # grab the request token for session
-            @session.get_request_token
+            print "Enter the authorization code here: "
+            STDOUT.flush
+            auth_code = STDIN.gets.strip
 
-            authorize_url = @session.get_authorize_url
-            puts "Got a request token.  Your request token key is #{@session.request_token.key} and your token secret is #{@session.request_token.secret}"
+            access_token, user_id = web_auth.finish(auth_code)
 
-            # make the user log in and authorize this token
-            puts "AUTHORIZING", authorize_url, "Please visit that web page and hit 'Allow', then hit Enter here."
-            gets
-
-            # get the access token from the server. Its then stored in the session.
-            @session.get_access_token
-
+            @client = DropboxClient.new(access_token)
+            puts "You are logged in.  Your access token is #{access_token}."
         end
-        puts "You are logged in.  Your access token key is #{@session.access_token.key} your secret is #{@session.access_token.secret}"
-        @client = DropboxClient.new(@session, ACCESS_TYPE)
     end
 
     def command_loop
@@ -96,9 +83,8 @@ class DropboxCLI
     end
 
     def logout(command)
-        @session.clear_access_token
-        puts "You are logged out."
         @client = nil
+        puts "You are logged out."
     end
 
     def put(command)
@@ -129,13 +115,10 @@ class DropboxCLI
             puts "error: File #{dest} already exists."
         else
             src = clean_up(command[1])
-            metadata = @client.metadata('/' + src)
+            out,metadata = @client.get_file_and_metadata('/' + src)
             puts "Metadata:"
             pp metadata
-            media = @client.media('/' + src)
-           `wget #{media["url"]} -q -T 20 -O #{dest}`
-            #out,metadata = @client.get_file_and_metadata('/' + src)
-            #open(dest, 'w'){|f| f.puts out }
+            open(dest, 'w'){|f| f.puts out }
             puts "wrote file #{dest}."
         end
     end

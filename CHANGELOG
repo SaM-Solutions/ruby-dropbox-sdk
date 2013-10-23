@@ -1,3 +1,14 @@
+1.6.2 (2013-10-10)
+* Put params in body for POST requests (they were being put in the URL).
+  Fixes bug with /delta and really long cursors.
+
+1.6.1 (2013-07-08)
+* Fixed syntax error (Ruby 1.8.7 didn't mind, but Ruby 1.9 did).
+
+1.6 (2013-07-07)
+* Added OAuth 2 support (DropboxOAuth2Flow).  OAuth 1 still works.
+* Fixed many minor bugs.
+
 1.5.1 (2012-8-20)
 * Fixed packaging.
 

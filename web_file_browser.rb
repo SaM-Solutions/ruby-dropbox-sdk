@@ -13,68 +13,63 @@
 require 'rubygems'
 require 'sinatra'
 require 'pp'
+require 'securerandom'
 require './lib/dropbox_sdk'
 
 # Get your app's key and secret from https://www.dropbox.com/developers/
 APP_KEY = ''
 APP_SECRET = ''
-ACCESS_TYPE = :app_folder #The two valid values here are :app_folder and :dropbox
-                          #The default is :app_folder, but your application might be
-                          #set to have full :dropbox access.  Check your app at
-                          #https://www.dropbox.com/developers/apps
 
 # -------------------------------------------------------------------
 # OAuth stuff
 
-get '/oauth-start' do
-    # OAuth Step 1: Get a request token from Dropbox.
-    db_session = DropboxSession.new(APP_KEY, APP_SECRET)
-    begin
-        db_session.get_request_token
-    rescue DropboxError => e
-        return html_page "Exception in OAuth step 1", "<p>#{h e}</p>"
-    end
-
-    session[:request_db_session] = db_session.serialize
-
-    # OAuth Step 2: Send the user to the Dropbox website so they can authorize
-    # our app.  After the user authorizes our app, Dropbox will redirect them
-    # to our '/oauth-callback' endpoint.
-    auth_url = db_session.get_authorize_url url('/oauth-callback')
-    redirect auth_url 
+def get_web_auth()
+    return DropboxOAuth2Flow.new(APP_KEY, APP_SECRET, url('/dropbox-auth-finish'),
+                                 session, :dropbox_auth_csrf_token)
 end
 
-get '/oauth-callback' do
-    # Finish OAuth Step 2
-    ser = session[:request_db_session]
-    unless ser
-        return html_page "Error in OAuth step 2", "<p>Couldn't find OAuth state in session.</p>"
-    end
-    db_session = DropboxSession.deserialize(ser)
+get '/dropbox-auth-start' do
+    authorize_url = get_web_auth().start()
 
-    # OAuth Step 3: Get an access token from Dropbox.
+    # Send the user to the Dropbox website so they can authorize our app.  After the user
+    # authorizes our app, Dropbox will redirect them to our '/dropbox-auth-finish' endpoint.
+    redirect authorize_url
+end
+
+get '/dropbox-auth-finish' do
     begin
-        db_session.get_access_token
+        access_token, user_id, url_state = get_web_auth.finish(params)
+    rescue DropboxOAuth2Flow::BadRequestError => e
+        return html_page "Error in OAuth 2 flow", "<p>Bad request to /dropbox-auth-finish: #{e}</p>"
+    rescue DropboxOAuth2Flow::BadStateError => e
+        return html_page "Error in OAuth 2 flow", "<p>Auth session expired: #{e}</p>"
+    rescue DropboxOAuth2Flow::CsrfError => e
+        logger.info("/dropbox-auth-finish: CSRF mismatch: #{e}")
+        return html_page "Error in OAuth 2 flow", "<p>CSRF mismatch</p>"
+    rescue DropboxOAuth2Flow::NotApprovedError => e
+        return html_page "Not Approved?", "<p>Why not, bro?</p>"
+    rescue DropboxOAuth2Flow::ProviderError => e
+        return html_page "Error in OAuth 2 flow", "Error redirect from Dropbox: #{e}"
     rescue DropboxError => e
-        return html_page "Exception in OAuth step 3", "<p>#{h e}</p>"
+        logger.info "Error getting OAuth 2 access token: #{e}"
+        return html_page "Error in OAuth 2 flow", "<p>Error getting access token</p>"
     end
-    session.delete(:request_db_session)
-    session[:authorized_db_session] = db_session.serialize
+
+    # In this simple example, we store the authorized DropboxSession in the session.
+    # A real webapp might store it somewhere more persistent.
+    session[:access_token] = access_token
     redirect url('/')
-    # In this simple example, we store the authorized DropboxSession in the web
-    # session hash.  A "real" webapp might store it somewhere more persistent.
+end
+
+get '/dropbox-unlink' do
+    session.delete(:access_token)
+    nil
 end
 
 # If we already have an authorized DropboxSession, returns a DropboxClient.
-def get_db_client
-    if session[:authorized_db_session]
-        db_session = DropboxSession.deserialize(session[:authorized_db_session])
-        begin
-            return DropboxClient.new(db_session, ACCESS_TYPE)
-        rescue DropboxAuthError => e
-            # The stored session didn't work.  Fall through and start OAuth.
-            session[:authorized_db_session].delete
-        end
+def get_dropbox_client
+    if session[:access_token]
+        return DropboxClient.new(session[:access_token])
     end
 end
 
@@ -83,34 +78,36 @@ end
 
 get '/' do
     # Get the DropboxClient object.  Redirect to OAuth flow if necessary.
-    db_client = get_db_client
-    unless db_client
-        redirect url("/oauth-start")
+    client = get_dropbox_client
+    unless client
+        redirect url("/dropbox-auth-start")
     end
 
     # Call DropboxClient.metadata
     path = params[:path] || '/'
     begin
-        entry = db_client.metadata(path)
+        entry = client.metadata(path)
     rescue DropboxAuthError => e
-        session.delete(:authorized_db_session)  # An auth error means the db_session is probably bad
-        return html_page "Dropbox auth error", "<p>#{h e}</p>"
+        session.delete(:access_token)  # An auth error means the access token is probably bad
+        logger.info "Dropbox auth error: #{e}"
+        return html_page "Dropbox auth error"
     rescue DropboxError => e
         if e.http_response.code == '404'
-            return html_page "Path not found: #{h path}", ""
+            return html_page "Path not found: #{h path}"
         else
-            return html_page "Dropbox API error", "<pre>#{h e.http_response}</pre>"
+            logger.info "Dropbox API error: #{e}"
+            return html_page "Dropbox API error"
         end
     end
 
     if entry['is_dir']
-        render_folder(db_client, entry)
+        render_folder(client, entry)
     else
-        render_file(db_client, entry)
+        render_file(client, entry)
     end
 end
 
-def render_folder(db_client, entry)
+def render_folder(client, entry)
     # Provide an upload form (so the user can add files to this folder)
     out = "<form action='/upload' method='post' enctype='multipart/form-data'>"
     out += "<label for='file'>Upload file:</label> <input name='file' type='file'/>"
@@ -128,7 +125,7 @@ def render_folder(db_client, entry)
     html_page "Folder: #{entry['path']}", out
 end
 
-def render_file(db_client, entry)
+def render_file(client, entry)
     # Just dump out metadata hash
     html_page "File: #{entry['path']}", "<pre>#{h entry.pretty_inspect}</pre>"
 end
@@ -144,19 +141,21 @@ post '/upload' do
     end
 
     # Get the DropboxClient object.
-    db_client = get_db_client
-    unless db_client
+    client = get_dropbox_client
+    unless client
         return html_page "Upload error", "<p>Not linked with a Dropbox account.</p>"
     end
 
     # Call DropboxClient.put_file
     begin
-        entry = db_client.put_file("#{params[:folder]}/#{name}", temp_file.read)
+        entry = client.put_file("#{params[:folder]}/#{name}", temp_file.read)
     rescue DropboxAuthError => e
-        session.delete(:authorized_db_session)  # An auth error means the db_session is probably bad
-        return html_page "Dropbox auth error", "<p>#{h e}</p>"
+        session.delete(:access_token)  # An auth error means the access token is probably bad
+        logger.info "Dropbox auth error: #{e}"
+        return html_page "Dropbox auth error"
     rescue DropboxError => e
-        return html_page "Dropbox API error", "<p>#{h e}</p>"
+        logger.info "Dropbox API error: #{e}"
+        return html_page "Dropbox API error"
     end
 
     html_page "Upload complete", "<pre>#{h entry.pretty_inspect}</pre>"
@@ -164,13 +163,18 @@ end
 
 # -------------------------------------------------------------------
 
-def html_page(title, body)
+def html_page(title, body='')
     "<html>" +
         "<head><title>#{h title}</title></head>" +
         "<body><h1>#{h title}</h1>#{body}</body>" +
     "</html>"
 end
 
+# Rack will issue a warning if no session secret key is set.  A real web app would not have
+# a hard-coded secret in the code but would load it from a config file.
+use Rack::Session::Cookie, :secret => 'dummy_secret'
+
+set :port, 5000
 enable :sessions
 
 helpers do

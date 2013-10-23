@@ -27,11 +27,6 @@ require 'json'
 # Find this at https://www.dropbox.com/developers
 APP_KEY = ''
 APP_SECRET = ''
-ACCESS_TYPE = :app_folder #The two valid values here are :app_folder and :dropbox
-                          #The default is :app_folder, but your application might be
-                          #set to have full :dropbox access.  Check your app at
-                          #https://www.dropbox.com/developers/apps
-
 
 STATE_FILE = 'search_cache.json'
 
@@ -70,30 +65,27 @@ def main()
 end
 
 
-
 def command_link(args)
     if args.size != 1
         warn "ERROR: \"link\" doesn't take any arguments"
         exit
     end
 
-    sess = DropboxSession.new(APP_KEY, APP_SECRET)
-    sess.get_request_token
+    web_auth = DropboxOAuth2FlowNoRedirect.new(APP_KEY, APP_SECRET)
+    authorize_url = web_auth.start()
+    puts "1. Go to: #{authorize_url}"
+    puts "2. Click \"Allow\" (you might have to log in first)."
+    puts "3. Copy the authorization code."
 
-    # Make the user log in and authorize this token
-    url = sess.get_authorize_url
-    puts "1. Go to: #{url}"
-    puts "2. Authorize this app."
-    puts "After you're done, press ENTER."
-    STDIN.gets
+    print "Enter the authorization code here: "
+    STDOUT.flush
+    auth_code = STDIN.gets.strip
 
-    # This will fail if the user didn't visit the above URL and hit 'Allow'
-    sess.get_access_token
-    access_token = sess.access_token
+    access_token, user_id = web_auth.finish(auth_code)
     puts "Link successful."
 
     save_state({
-        'access_token' => [access_token.key, access_token.secret],
+        'access_token' => access_token,
         'tree' => {}
     })
 end
@@ -116,9 +108,7 @@ def command_update(args)
     tree = state['tree']
 
     # Connect to Dropbox
-    sess = DropboxSession.new(APP_KEY, APP_SECRET)
-    sess.set_access_token(*access_token)
-    c = DropboxClient.new(sess, ACCESS_TYPE)
+    c = DropboxClient.new(access_token)
 
     page = 0
     changed = false

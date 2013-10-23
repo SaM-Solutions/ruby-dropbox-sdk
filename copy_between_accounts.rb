@@ -5,10 +5,6 @@ require 'json'
 # Find this at https://www.dropbox.com/developers
 APP_KEY = ''
 APP_SECRET = ''
-ACCESS_TYPE = :app_folder #The two valid values here are :app_folder and :dropbox
-                          #The default is :app_folder, but your application might be
-                          #set to have full :dropbox access.  Check your app at
-                          #https://www.dropbox.com/developers/apps
 
 STATE_FILE = 'copy_between_accounts.json'
 
@@ -48,27 +44,25 @@ def command_link(args)
         exit
     end
 
-    sess = DropboxSession.new(APP_KEY, APP_SECRET)
-    sess.get_request_token
+    web_auth = DropboxOAuth2FlowNoRedirect.new(APP_KEY, APP_SECRET)
+    authorize_url = web_auth.start()
+    puts "1. Go to: #{authorize_url}"
+    puts "2. Click \"Allow\" (you might have to log in first)."
+    puts "3. Copy the authorization code."
 
-    # Make the user log in and authorize this token
-    url = sess.get_authorize_url
-    puts "1. Go to: #{url}"
-    puts "2. Authorize this app."
-    puts "After you're done, press ENTER."
-    STDIN.gets
+    print "Enter the authorization code here: "
+    STDOUT.flush
+    auth_code = STDIN.gets.strip
 
-    # This will fail if the user didn't visit the above URL and hit 'Allow'
-    sess.get_access_token
-    access_token = sess.access_token
-    c = DropboxClient.new(sess, ACCESS_TYPE)
+    access_token, user_id = web_auth.finish(auth_code)
+
+    c = DropboxClient.new(access_token)
     account_info = c.account_info()
-
     puts "Link successful. #{account_info['display_name']} is uid #{account_info['uid']} "
 
     state = load_state()
     state[account_info['uid']] = {
-                    'access_token' => [access_token.key, access_token.secret],
+                    'access_token' => access_token,
                     'display_name' => account_info['display_name'],
     }
 
@@ -116,17 +110,8 @@ def command_copy(args)
         exit
     end
 
-    from_token = state[from_uid]['access_token']
-    to_token = state[to_uid]['access_token']
-
-    from_session = DropboxSession.new(APP_KEY, APP_SECRET)
-    to_session = DropboxSession.new(APP_KEY, APP_SECRET)
-
-    from_session.set_access_token(*from_token)
-    to_session.set_access_token(*to_token)
-
-    from_client = DropboxClient.new(from_session, ACCESS_TYPE)
-    to_client = DropboxClient.new(to_session, ACCESS_TYPE)
+    from_client = DropboxClient.new(state[from_uid]['access_token'])
+    to_client = DropboxClient.new(state[to_uid]['access_token'])
 
     #Create a copy ref under the identity of the from user
     copy_ref = from_client.create_copy_ref(from_path)['copy_ref']

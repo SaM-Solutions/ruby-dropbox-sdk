@@ -1,57 +1,107 @@
-require 'dropbox_sdk'
+# ---------------------------------------------------------------------------------------
+# A Rails 3 controller that:
+# - Runs the through Dropbox's OAuth 2 flow, yielding a Dropbox API access token.
+# - Makes a Dropbox API call to upload a file.
+#
+# To run:
+# 1. You need a Rails 3 project (to create one, run: rails new <folder-name>)
+# 2. Copy this file into <folder-name>/app/controllers/
+# 3. Add the following lines to <folder-name>/config/routes.rb
+#        get  "dropbox/main"
+#        post "dropbox/upload"
+#        get  "dropbox/auth_start"
+#        get  "dropbox/auth_finish"
+# 4. Run: rails server
+# 5. Point your browser at: https://localhost:3000/dropbox/main
 
-# This is an example of a Rails 3 controller that authorizes an application
-# and then uploads a file to the user's Dropbox.
+require '../lib/dropbox_sdk'
+require 'securerandom'
 
-# You must set these
 APP_KEY = ""
 APP_SECRET = ""
-ACCESS_TYPE = :app_folder #The two valid values here are :app_folder and :dropbox
-                          #The default is :app_folder, but your application might be
-                          #set to have full :dropbox access.  Check your app at
-                          #https://www.dropbox.com/developers/apps
 
+class DropboxController < ApplicationController
 
-# Examples routes for config/routes.rb  (Rails 3)
-#match 'db/authorize', :controller => 'db', :action => 'authorize'
-#match 'db/upload', :controller => 'db', :action => 'upload'
-
-class DbController < ApplicationController
-    def authorize
-        if not params[:oauth_token] then
-            dbsession = DropboxSession.new(APP_KEY, APP_SECRET)
-
-            session[:dropbox_session] = dbsession.serialize #serialize and save this DropboxSession
-
-            #pass to get_authorize_url a callback url that will return the user here
-            redirect_to dbsession.get_authorize_url url_for(:action => 'authorize')
-        else
-            # the user has returned from Dropbox
-            dbsession = DropboxSession.deserialize(session[:dropbox_session])
-            dbsession.get_access_token  #we've been authorized, so now request an access_token
-            session[:dropbox_session] = dbsession.serialize
-
-            redirect_to :action => 'upload'
+    def main
+        client = get_dropbox_client
+        unless client
+            redirect_to(:action => 'auth_start') and return
         end
+
+        account_info = client.account_info
+
+        # Show a file upload page
+        render :inline =>
+            "#{account_info['email']} <br/><%= form_tag({:action => :upload}, :multipart => true) do %><%= file_field_tag 'file' %><%= submit_tag 'Upload' %><% end %>"
     end
 
     def upload
-        # Check if user has no dropbox session...re-direct them to authorize
-        return redirect_to(:action => 'authorize') unless session[:dropbox_session]
+        client = get_dropbox_client
+        unless client
+            redirect_to(:action => 'auth_start') and return
+        end
 
-        dbsession = DropboxSession.deserialize(session[:dropbox_session])
-        client = DropboxClient.new(dbsession, ACCESS_TYPE) #raise an exception if session not authorized
-        info = client.account_info # look up account information
-
-        if request.method != "POST"
-            # show a file upload page
-            render :inline =>
-                "#{info['email']} <br/><%= form_tag({:action => :upload}, :multipart => true) do %><%= file_field_tag 'file' %><%= submit_tag %><% end %>"
-            return
-        else
-            # upload the posted file to dropbox keeping the same name
+        begin
+            # Upload the POST'd file to Dropbox, keeping the same name
             resp = client.put_file(params[:file].original_filename, params[:file].read)
-            render :text => "Upload successful! File now at #{resp['path']}"
+            render :text => "Upload successful.  File now at #{resp['path']}"
+        rescue DropboxAuthError => e
+            session.delete(:access_token)  # An auth error means the access token is probably bad
+            logger.info "Dropbox auth error: #{e}"
+            render :text => "Dropbox auth error"
+        rescue DropboxError => e
+            logger.info "Dropbox API error: #{e}"
+            render :text => "Dropbox API error"
+        end
+    end
+
+    def get_dropbox_client
+        if session[:access_token]
+            begin
+                access_token = session[:access_token]
+                DropboxClient.new(access_token)
+            rescue
+                # Maybe something's wrong with the access token?
+                session.delete(:access_token)
+                raise
+            end
+        end
+    end
+
+    def get_web_auth()
+        redirect_uri = url_for(:action => 'auth_finish')
+        DropboxOAuth2Flow.new(APP_KEY, APP_SECRET, redirect_uri, session, :dropbox_auth_csrf_token)
+    end
+
+    def auth_start
+        authorize_url = get_web_auth().start()
+
+        # Send the user to the Dropbox website so they can authorize our app.  After the user
+        # authorizes our app, Dropbox will redirect them here with a 'code' parameter.
+        redirect_to authorize_url
+    end
+
+    def auth_finish
+        begin
+            access_token, user_id, url_state = get_web_auth.finish(params)
+            session[:access_token] = access_token
+            redirect_to :action => 'main'
+        rescue DropboxOAuth2Flow::BadRequestError => e
+            render :text => "Error in OAuth 2 flow: Bad request: #{e}"
+        rescue DropboxOAuth2Flow::BadStateError => e
+            logger.info("Error in OAuth 2 flow: No CSRF token in session: #{e}")
+            redirect_to(:action => 'auth_start')
+        rescue DropboxOAuth2Flow::CsrfError => e
+            logger.info("Error in OAuth 2 flow: CSRF mismatch: #{e}")
+            render :text => "CSRF error"
+        rescue DropboxOAuth2Flow::NotApprovedError => e
+            render :text => "Not approved?  Why not, bro?"
+        rescue DropboxOAuth2Flow::ProviderError => e
+            logger.info "Error in OAuth 2 flow: Error redirect from Dropbox: #{e}"
+            render :text => "Strange error."
+        rescue DropboxError => e
+            logger.info "Error getting OAuth 2 access token: #{e}"
+            render :text => "Error communicating with Dropbox servers."
         end
     end
 end

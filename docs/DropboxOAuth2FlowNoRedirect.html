@@ -5,7 +5,7 @@
 <head>
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 
-  <title>Class: DropboxError</title>
+  <title>Class: DropboxOAuth2FlowNoRedirect</title>
 
   <link rel="stylesheet" href="./rdoc.css" type="text/css" media="screen" />
 
@@ -49,7 +49,7 @@
       <div id="parent-class-section" class="section">
         <h3 class="section-header">Parent</h3>
         
-        <p class="link">RuntimeError</p>
+        <p class="link">DropboxOAuth2FlowBase</p>
         
       </div>
       
@@ -66,7 +66,9 @@
           
           <li><a href="#method-c-new">::new</a></li>
           
-          <li><a href="#method-i-to_s">#to_s</a></li>
+          <li><a href="#method-i-finish">#finish</a></li>
+          
+          <li><a href="#method-i-start">#start</a></li>
           
         </ul>
       </div>
@@ -127,11 +129,12 @@
   </div>
 
   <div id="documentation">
-    <h1 class="class">DropboxError</h1>
+    <h1 class="class">DropboxOAuth2FlowNoRedirect</h1>
 
     <div id="description" class="description">
       
-<p>This is the usual error raised on any Dropbox related Errors</p>
+<p>OAuth 2 authorization helper for apps that can’t provide a redirect URI
+(such as the command line example apps).</p>
 
     </div><!-- description -->
 
@@ -146,64 +149,6 @@
       
 
       
-      <!-- Attributes -->
-      <div id="attribute-method-details" class="method-section section">
-        <h3 class="section-header">Attributes</h3>
-
-        
-        <div id="error-attribute-method" class="method-detail">
-          <a name="error"></a>
-          
-          <a name="error="></a>
-          
-          <div class="method-heading attribute-method-heading">
-            <span class="method-name">error</span><span
-              class="attribute-access-type">[RW]</span>
-          </div>
-
-          <div class="method-description">
-          
-          
-          
-          </div>
-        </div>
-        
-        <div id="http_response-attribute-method" class="method-detail">
-          <a name="http_response"></a>
-          
-          <a name="http_response="></a>
-          
-          <div class="method-heading attribute-method-heading">
-            <span class="method-name">http_response</span><span
-              class="attribute-access-type">[RW]</span>
-          </div>
-
-          <div class="method-description">
-          
-          
-          
-          </div>
-        </div>
-        
-        <div id="user_error-attribute-method" class="method-detail">
-          <a name="user_error"></a>
-          
-          <a name="user_error="></a>
-          
-          <div class="method-heading attribute-method-heading">
-            <span class="method-name">user_error</span><span
-              class="attribute-access-type">[RW]</span>
-          </div>
-
-          <div class="method-description">
-          
-          
-          
-          </div>
-        </div>
-        
-      </div><!-- attribute-method-details -->
-      
 
       <!-- Methods -->
       
@@ -217,24 +162,28 @@
           
           <div class="method-heading">
             <span class="method-name">new</span><span
-              class="method-args">(error, http_response=nil, user_error=nil)</span>
+              class="method-args">(consumer_key, consumer_secret, locale=nil)</span>
             <span class="method-click-advice">click to toggle source</span>
           </div>
           
 
           <div class="method-description">
             
-            
+            <ul><li>
+<p>consumer_key: Your Dropbox API app’s “app key”</p>
+</li><li>
+<p>consumer_secret: Your Dropbox API app’s “app secret”</p>
+</li><li>
+<p>locale: The locale of the user currently using your app.</p>
+</li></ul>
             
 
             
             <div class="method-source-code" id="new-source">
 <pre>
-<span class="ruby-comment"># File build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb, line 649</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>(<span class="ruby-identifier">error</span>, <span class="ruby-identifier">http_response</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">user_error</span>=<span class="ruby-keyword">nil</span>)
-    <span class="ruby-ivar">@error</span> = <span class="ruby-identifier">error</span>
-    <span class="ruby-ivar">@http_response</span> = <span class="ruby-identifier">http_response</span>
-    <span class="ruby-ivar">@user_error</span> = <span class="ruby-identifier">user_error</span>
+<span class="ruby-comment"># File build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb, line 447</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>(<span class="ruby-identifier">consumer_key</span>, <span class="ruby-identifier">consumer_secret</span>, <span class="ruby-identifier">locale</span>=<span class="ruby-keyword">nil</span>)
+    <span class="ruby-keyword">super</span>(<span class="ruby-identifier">consumer_key</span>, <span class="ruby-identifier">consumer_secret</span>, <span class="ruby-identifier">locale</span>)
 <span class="ruby-keyword">end</span></pre>
             </div><!-- new-source -->
             
@@ -252,12 +201,55 @@
         <h3 class="section-header">Public Instance Methods</h3>
 
       
-        <div id="to_s-method" class="method-detail ">
-          <a name="method-i-to_s"></a>
+        <div id="finish-method" class="method-detail ">
+          <a name="method-i-finish"></a>
 
           
           <div class="method-heading">
-            <span class="method-name">to_s</span><span
+            <span class="method-name">finish</span><span
+              class="method-args">(code)</span>
+            <span class="method-click-advice">click to toggle source</span>
+          </div>
+          
+
+          <div class="method-description">
+            
+            <p>If the user approves your app, they will be presented with an
+“authorization code”. Have the user copy/paste that authorization code into
+your app and then call this method to get an access token.</p>
+
+<p>Returns a two-entry list (access_token, user_id)</p>
+<ul><li>
+<p>access_token is an access token string that can be passed to <a
+href="DropboxClient.html">DropboxClient</a>.</p>
+</li><li>
+<p>user_id is the Dropbox user ID of the user that just approved your app.</p>
+</li></ul>
+            
+
+            
+            <div class="method-source-code" id="finish-source">
+<pre>
+<span class="ruby-comment"># File build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb, line 464</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">finish</span>(<span class="ruby-identifier">code</span>)
+    <span class="ruby-identifier">_finish</span>(<span class="ruby-identifier">code</span>, <span class="ruby-keyword">nil</span>)
+<span class="ruby-keyword">end</span></pre>
+            </div><!-- finish-source -->
+            
+          </div>
+
+          
+
+          
+        </div><!-- finish-method -->
+
+      
+        <div id="start-method" class="method-detail ">
+          <a name="method-i-start"></a>
+
+          
+          <div class="method-heading">
+            <span class="method-name">start</span><span
               class="method-args">()</span>
             <span class="method-click-advice">click to toggle source</span>
           </div>
@@ -265,25 +257,25 @@
 
           <div class="method-description">
             
-            
+            <p>Returns a authorization_url, which is a page on Dropbox’s website.  Have
+the user visit this URL and approve your app.</p>
             
 
             
-            <div class="method-source-code" id="to_s-source">
+            <div class="method-source-code" id="start-source">
 <pre>
-<span class="ruby-comment"># File build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb, line 655</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">to_s</span>
-    <span class="ruby-keyword">return</span> <span class="ruby-node">&quot;#{user_error} (#{error})&quot;</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">user_error</span>
-    <span class="ruby-node">&quot;#{error}&quot;</span>
+<span class="ruby-comment"># File build/dropbox-ruby-sdk-1.6.2/lib/dropbox_sdk.rb, line 453</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">start</span>()
+    <span class="ruby-identifier">_get_authorize_url</span>(<span class="ruby-keyword">nil</span>, <span class="ruby-keyword">nil</span>)
 <span class="ruby-keyword">end</span></pre>
-            </div><!-- to_s-source -->
+            </div><!-- start-source -->
             
           </div>
 
           
 
           
-        </div><!-- to_s-method -->
+        </div><!-- start-method -->
 
       
       </div><!-- public-instance-method-details -->
