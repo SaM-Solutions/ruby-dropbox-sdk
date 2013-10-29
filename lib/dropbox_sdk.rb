@@ -45,7 +45,7 @@ module Dropbox # :nodoc:
             http.request(request)
         rescue OpenSSL::SSL::SSLError => e
             raise DropboxError.new("SSL error connecting to Dropbox.  " +
-                                   "There may be a problem with the set of certificates in \"#{Dropbox::TRUSTED_CERT_FILE}\".  #{e}")
+                                   "There may be a problem with the set of certificates in \"#{Dropbox::TRUSTED_CERT_FILE}\".  #{e.message}")
         end
     end
 
@@ -799,9 +799,18 @@ class DropboxClient
                 begin
                     resp = Dropbox::parse_response(@client.partial_chunked_upload(last_chunk, @upload_id, @offset))
                     last_chunk = nil
+                rescue SocketError => e
+                  raise e
+                rescue SystemCallError => e
+                  raise e
                 rescue DropboxError => e
-                    resp = JSON.parse(e.http_response.body)
-                    raise unless resp.has_key? 'offset'
+                  raise e if e.http_response.nil? or e.http_response.code[0] == '5'
+                    begin
+                      resp = JSON.parse(e.http_response.body)
+                      raise DropboxError.new('server response does not have offset key') unless resp.has_key? 'offset'
+                    rescue JSON::ParserError
+                      raise DropboxError.new("Unable to parse JSON response: #{e.http_response.body}")
+                    end
                 end
 
                 if resp.has_key? 'offset' and resp['offset'] > @offset
