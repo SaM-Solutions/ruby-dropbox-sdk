@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.6.2-2) unstable; urgency=low
+
+  * Integrated stability improvement from 1.5.1 to 1.6.2.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Tue, 29 Oct 2013 08:29:00 +0300
+
 ruby-dropbox-sdk (1.6.2-1) unstable; urgency=low
 
   * Switched to new Dropbox SDK 1.6.2.
