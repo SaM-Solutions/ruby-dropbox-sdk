@@ -38,6 +38,10 @@ module Dropbox # :nodoc:
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
         http.ca_file = Dropbox::TRUSTED_CERT_FILE
 
+        http.open_timeout = 180
+        http.read_timeout = 180
+        http.ssl_timeout = 180
+
         #We use this to better understand how developers are using our SDKs.
         request['User-Agent'] =  "OfficialDropboxRubySDK/#{Dropbox::SDK_VERSION}"
 
