@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.6.2-3) unstable; urgency=low
+
+  * Added SSL and HTTP timeouts.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Thu, 15 Nov 2013 12:13:00 +0300
+
 ruby-dropbox-sdk (1.6.2-2) unstable; urgency=low
 
   * Integrated stability improvement from 1.5.1 to 1.6.2.
