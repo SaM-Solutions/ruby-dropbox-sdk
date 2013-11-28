@@ -173,7 +173,10 @@ class DropboxCLI
     counter = 0
     cursor_blk = lambda{|cursor| cur_sor = cursor }
     hasmore_blk = lambda{|hasmore| has_more = hasmore }
-    entry_blk = lambda{|entry| puts entry} 
+    entry_blk = lambda{|entry| 
+      pp entry
+      counter += 1
+    } 
 
     while has_more
       puts "Using cursor: #{cur_sor}"

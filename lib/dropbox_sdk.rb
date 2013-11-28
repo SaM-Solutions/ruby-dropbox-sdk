@@ -32,79 +32,47 @@ module Dropbox # :nodoc:
     }.join("&")
   end
 
-  def self.init_stream_parser(entry_blk, cursor_blk, hasmore_blk)
+  def self.init_stream_parser(entry_handler, cursor_handler, has_more_handler)
     @stream_parser = JSON::Stream::Parser.new do
-      hasmore_found = false
-      cursor_found = false
-      rev_found = false
-      bytes_found = false
-      path_found = false
-      isdir_found = false
-      modified_found = false
-      array_started = true
       entry = []
       meta = nil
+      last_key = nil
+      array_started = false
+      meta_keys = ["rev", "path", "bytes", "is_dir", "modified"]
+      handlers  = {"has_more" => has_more_handler, 
+                   "cursor" => cursor_handler} # TODO: add 'reset' key
 
-      # redundant callbacks, not used for now
-      start_document { }
-      end_document   { }
-      start_object   { }
-      end_object     { }
-      start_array    { array_started = true }
+      start_array { 
+        array_started = true 
+      }
+
       end_array {
         entry << meta
-        entry_blk.call(entry)
-        entry.clear
+        entry_handler.call(entry) if entry_handler.respond_to? :call
         meta.clear unless meta.nil?
         meta = nil
+        entry.clear
       }
 
-      # handling key
       key {|k| 
-        hasmore_found=true if k == "has_more"
-        cursor_found=true  if k == "cursor"
-        rev_found = true   if k == "rev"
-        bytes_found = true if k == "bytes"
-        path_found = true  if k == "path"
-        isdir_found = true if k == "is_dir"
-        modified_found = true if k == "modified"
+        last_key = k
       }
 
-      # handling key's value
       value {|v|
-        if cursor_found
-          cursor_blk.call(v) 
-          cursor_found = false
-        elsif hasmore_found
-          hasmore_blk.call(v) 
-          hasmore_found = false
-        elsif array_started
+        if handlers.keys.include? last_key
+           handlers[last_key].call(v) if handlers[last_key].respond_to? :call
+        end
+
+        if array_started
           entry << v
           array_started = false
-        elsif rev_found
-          meta ||= Hash.new
-          meta["rev"] = v
-          rev_found = false
-        elsif bytes_found
-          meta ||= Hash.new
-          meta["bytes"] = v
-          bytes_found = false
-        elsif path_found
-          meta ||= Hash.new
-          meta["path"] = v
-          path_found = false
-        elsif isdir_found
-          meta ||= Hash.new
-          meta["is_dir"] = v
-          isdir_found = false
-        elsif modified_found
-          meta ||= Hash.new
-          meta["modified"] = v
-          modified_found = false
-        else
-          # nothing interesting found, skip it
         end
-      }
+ 
+        if meta_keys.include? last_key
+          meta ||= Hash.new 
+          meta[last_key] = v
+        end
+     }
     end
   end
 
@@ -121,7 +89,6 @@ module Dropbox # :nodoc:
           end
           response.read_body do |chunk|
             begin
-              puts chunk
               @stream_parser << chunk
             rescue JSON::Stream::ParserError
               raise DropboxError.new("Unable to parse JSON response: #{chunk}", chunk)
