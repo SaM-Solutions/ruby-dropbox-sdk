@@ -10,8 +10,8 @@ require 'pp'
 
 # You must use your Dropbox App key and secret to use the API.
 # Find this at https://www.dropbox.com/developers
-APP_KEY = '8c9eb974ppp9vd7'
-APP_SECRET = 'rq09a2ql24bdwif'
+APP_KEY = ''
+APP_SECRET = ''
 
 class DropboxCLI
   LOGIN_REQUIRED = %w{put get cp mv rm ls mkdir info logout search delta thumbnail}
