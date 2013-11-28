@@ -1328,15 +1328,15 @@ class DropboxClient
   end
 
   # Parse delta with constant memory usage for large response
-  # @param entry_blk - callback for parsing entries
-  # @param cursor_blk - callback for handling delta cursor
-  # @param hasmore_blk - callback for has_more flag 
-  def big_delta(cursor=nil, entry_blk=nil, cursor_blk=nil, hasmore_blk=nil)
+  # @param entry_handler - callback for parsing entries
+  # @param cursor_handler - callback for handling delta cursor
+  # @param hasmore_handler - callback for has_more flag 
+  def big_delta(cursor=nil, entry_handler=nil, cursor_handler=nil, has_more_handler=nil)
     params = {
       'cursor' => cursor,
     }
 
-    Dropbox.init_stream_parser(entry_blk, cursor_blk, hasmore_blk)
+    Dropbox.init_stream_parser(entry_handler, cursor_handler, has_more_handler)
     @session.do_post "/delta", params, nil, false, true
   end
 
