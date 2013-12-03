@@ -85,8 +85,10 @@ module Dropbox # :nodoc:
           elsif response.kind_of?(Net::HTTPUnauthorized)
             raise DropboxAuthError.new("User is not authenticated.", response)
           elsif not response.kind_of?(Net::HTTPSuccess)
-            # TODO: add more sophisticated error handling here!!!              
+            raise DropboxError.new("Dropbox Server Error: body=#{response.body}", response)
           end
+
+          # reading by chunks from the response
           response.read_body do |chunk|
             begin
               @stream_parser << chunk
@@ -94,8 +96,9 @@ module Dropbox # :nodoc:
               raise DropboxError.new("Unable to parse JSON response: #{chunk}", chunk)
             end
           end
-        end
-      end
+
+        end # http.request(request)
+      end # conn.start
     rescue OpenSSL::SSL::SSLError => e
       raise DropboxError.new("SSL error connecting to Dropbox.  " +
                              "There may be a problem with the set of certificates in \"#{Dropbox::TRUSTED_CERT_FILE}\".  #{e.message}")

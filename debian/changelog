@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.6.2-7) unstable; urgency=low
+
+  * Added  more sophisticated error handling on bad HTTP response.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Tue, 3 Dec 2013 08:44:12 +0300
+
 ruby-dropbox-sdk (1.6.2-6) unstable; urgency=low
 
   * Cleanup example code.
