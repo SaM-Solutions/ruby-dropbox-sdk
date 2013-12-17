@@ -32,53 +32,9 @@ module Dropbox # :nodoc:
     }.join("&")
   end
 
-  def self.init_stream_parser(entry_handler, cursor_handler, has_more_handler)
-    @stream_parser = JSON::Stream::Parser.new do
-      entry = []
-      meta = nil
-      last_key = nil
-      array_started = false
-      meta_keys = ["rev", "path", "bytes", "is_dir", "modified"]
-      handlers  = {"has_more" => has_more_handler, 
-                   "cursor" => cursor_handler} # TODO: add 'reset' key
-
-      start_array { 
-        array_started = true 
-      }
-
-      end_array {
-        entry << meta
-        entry_handler.call(entry) if entry_handler.respond_to? :call
-        meta.clear unless meta.nil?
-        meta = nil
-        entry.clear
-      }
-
-      key {|k| 
-        last_key = k
-      }
-
-      value {|v|
-        if handlers.keys.include? last_key
-           handlers[last_key].call(v) if handlers[last_key].respond_to? :call
-        end
-
-        if array_started
-          entry << v
-          array_started = false
-        end
- 
-        if meta_keys.include? last_key
-          meta ||= Hash.new 
-          meta[last_key] = v
-        end
-     }
-    end
-  end
-
-  def self.delta_do_http_request(conn, request)
+  def self.delta_do_http_request(conn, request, parser)
     begin
-      conn.start do |http| 
+      conn.start do |http|
         http.request(request) do |response|
           if response.kind_of?(Net::HTTPServerError)
             raise DropboxError.new("Dropbox Server Error: #{response} - #{response.body}", response)
@@ -91,7 +47,7 @@ module Dropbox # :nodoc:
           # reading by chunks from the response
           response.read_body do |chunk|
             begin
-              @stream_parser << chunk
+              parser << chunk
             rescue JSON::Stream::ParserError
               raise DropboxError.new("Unable to parse JSON response: #{chunk}", chunk)
             end
@@ -105,7 +61,7 @@ module Dropbox # :nodoc:
     end
   end
 
-  def self.do_http(uri, request, big_delta=false) # :nodoc:
+  def self.do_http(uri, request, parser=nil) # :nodoc:
     http = Net::HTTP.new(uri.host, uri.port)
 
     http.use_ssl = true
@@ -119,8 +75,8 @@ module Dropbox # :nodoc:
     #We use this to better understand how developers are using our SDKs.
     request['User-Agent'] =  "OfficialDropboxRubySDK/#{Dropbox::SDK_VERSION}"
 
-    if big_delta
-      return delta_do_http_request(http, request)
+    if parser
+      return delta_do_http_request(http, request, parser)
     end
 
     begin
@@ -200,9 +156,9 @@ class DropboxSessionBase # :nodoc:
 
   protected
 
-  def do_http(uri, request, big_delta=false) # :nodoc:
+  def do_http(uri, request, parser=nil) # :nodoc:
     sign_request(request)
-    Dropbox::do_http(uri, request, big_delta)
+    Dropbox::do_http(uri, request, parser)
   end
 
   public
@@ -214,7 +170,7 @@ class DropboxSessionBase # :nodoc:
     do_http(uri, Net::HTTP::Get.new(uri.request_uri))
   end
 
-  def do_http_with_body(uri, request, body, big_delta=false)
+  def do_http_with_body(uri, request, body, parser=nil)
     if body != nil
       if body.is_a?(Hash)
         request.set_form_data(Dropbox::clean_params(body))
@@ -233,15 +189,15 @@ class DropboxSessionBase # :nodoc:
         request.body = s
       end
     end
-    do_http(uri, request, big_delta)
+    do_http(uri, request, parser)
   end
 
-  def do_post(path, params=nil, headers=nil, content_server=false, big_delta=false)  # :nodoc:
+  def do_post(path, params=nil, headers=nil, content_server=false, parser=nil)  # :nodoc:
     params ||= {}
     assert_authorized
     uri = build_url(path, content_server)
     params['locale'] = @locale
-    do_http_with_body(uri, Net::HTTP::Post.new(uri.request_uri, headers), params, big_delta)
+    do_http_with_body(uri, Net::HTTP::Post.new(uri.request_uri, headers), params, parser)
   end
 
   def do_put(path, params=nil, headers=nil, body=nil, content_server=false)  # :nodoc:
@@ -1333,15 +1289,60 @@ class DropboxClient
   # Parse delta with constant memory usage for large response
   # @param entry_handler - callback for parsing entries
   # @param cursor_handler - callback for handling delta cursor
-  # @param hasmore_handler - callback for has_more flag 
+  # @param hasmore_handler - callback for has_more flag
   def big_delta(cursor=nil, entry_handler=nil, cursor_handler=nil, has_more_handler=nil)
     params = {
       'cursor' => cursor,
     }
 
-    Dropbox.init_stream_parser(entry_handler, cursor_handler, has_more_handler)
-    @session.do_post "/delta", params, nil, false, true
+    parser = init_stream_parser(entry_handler, cursor_handler, has_more_handler)
+    @session.do_post "/delta", params, nil, false, parser
   end
+
+  def init_stream_parser(entry_handler, cursor_handler, has_more_handler)
+    JSON::Stream::Parser.new do
+      entry = []
+      meta = nil
+      last_key = nil
+      array_started = false
+      meta_keys = ["rev", "path", "bytes", "is_dir", "modified"]
+      handlers  = {"has_more" => has_more_handler,
+                   "cursor" => cursor_handler} # TODO: add 'reset' key
+
+      start_array {
+        array_started = true
+      }
+
+      end_array {
+        entry << meta
+        entry_handler.call(entry) if entry_handler.respond_to? :call
+        meta.clear unless meta.nil?
+        meta = nil
+        entry.clear
+      }
+
+      key {|k|
+        last_key = k
+      }
+
+      value {|v|
+        if handlers.keys.include? last_key
+           handlers[last_key].call(v) if handlers[last_key].respond_to? :call
+        end
+
+        if array_started
+          entry << v
+          array_started = false
+        end
+
+        if meta_keys.include? last_key
+          meta ||= Hash.new
+          meta[last_key] = v
+        end
+     }
+    end
+  end
+
 
   # Download a thumbnail (helper method - don't call this directly).
   #

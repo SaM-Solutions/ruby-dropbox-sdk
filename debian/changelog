@@ -1,3 +1,9 @@
+ruby-dropbox-sdk (1.6.2-8) unstable; urgency=low
+
+  * Optimized JSON parsing: make it thread safe.
+
+ -- Aliaksei Tulia <a.tulia@sam-solutions.net>  Tue, 17 Dec 2013 15:30:12 +0300
+
 ruby-dropbox-sdk (1.6.2-7) unstable; urgency=low
 
   * Added  more sophisticated error handling on bad HTTP response.
